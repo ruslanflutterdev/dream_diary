@@ -1,158 +1,140 @@
+import 'package:dream_diary/widgets/sleep_quality_selector.dart';
 import 'package:flutter/material.dart';
 import '../models/sleep_entry.dart';
 
 class AddSleepEntryScreen extends StatefulWidget {
-  const AddSleepEntryScreen({super.key});
+  const AddSleepEntryScreen({Key? key}) : super(key: key);
 
   @override
-  State<AddSleepEntryScreen> createState() => _AddSleepEntryScreenState();
+  _AddSleepEntryScreenState createState() => _AddSleepEntryScreenState();
 }
 
 class _AddSleepEntryScreenState extends State<AddSleepEntryScreen> {
-  DateTime sleepTime = DateTime.now().subtract(Duration(hours: 8));
-  DateTime wakeTime = DateTime.now();
+  DateTime? sleepTime;
+  DateTime? wakeTime;
   int sleepQuality = 3;
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dreamController = TextEditingController();
 
-  Future<void> pickDateTime({
-    required DateTime initialDate,
-    required Function(DateTime) onPicked,
-  }) async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-    if (date == null) return;
+  void _pickDateTime({required bool isSleepTime}) async {
+    final DateTime now = DateTime.now();
+    final DateTime picked =
+        await showDatePicker(
+          context: context,
+          initialDate: now,
+          firstDate: now.subtract(Duration(days: 1)),
+          lastDate: now.add(Duration(days: 1)),
+        ) ??
+        now;
 
-    final time = await showTimePicker(
+    final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(initialDate),
+      initialTime: TimeOfDay.fromDateTime(now),
     );
-    if (time == null) return;
 
-    onPicked(DateTime(date.year, date.month, date.day, time.hour, time.minute));
+    if (pickedTime != null) {
+      final selectedDateTime = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+      setState(() {
+        if (isSleepTime) {
+          sleepTime = selectedDateTime;
+        } else {
+          wakeTime = selectedDateTime;
+        }
+      });
+    }
   }
 
-  String formatDateTime(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  bool _isValidEntry() {
+    if (sleepTime == null ||
+        wakeTime == null ||
+        sleepTime!.isAfter(wakeTime!)) {
+      return false;
+    }
+    if (wakeTime!.difference(sleepTime!).inDays > 0) {
+      return false;
+    }
+    return true;
   }
 
-  void saveEntry() {
-    final duration = wakeTime.difference(sleepTime);
-    if (wakeTime.isBefore(sleepTime)) {
-      showError('Время пробуждения не может быть раньше времени сна.');
-      return;
-    }
-    if (duration.inHours > 24) {
-      showError('Время сна не может превышать 24 часа.');
-      return;
-    }
-
-    Navigator.pop(
-      context,
-      SleepEntry(
-        sleepTime: sleepTime,
-        wakeTime: wakeTime,
+  void _saveEntry() {
+    if (_isValidEntry()) {
+      final newEntry = SleepEntry(
+        sleepTime: sleepTime!,
+        wakeTime: wakeTime!,
         sleepQuality: sleepQuality,
-        note: '${noteController.text}\nСны: ${dreamController.text}',
-      ),
-    );
-  }
-
-  void showError(String message) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Ошибка'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('ОК'),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget buildQualityButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(5, (i) {
-        final rating = i + 1;
-        final isSelected = rating == sleepQuality;
-        return ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isSelected ? Colors.blue : Colors.grey[300],
-            foregroundColor: isSelected ? Colors.white : Colors.black,
-          ),
-          onPressed: () {
-            setState(() {
-              sleepQuality = rating;
-            });
-          },
-          child: Text('$rating'),
-        );
-      }),
-    );
+        note: noteController.text,
+      );
+      Navigator.pop(context, newEntry);
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Неверные данные! Проверьте время.')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Добавить запись')),
+      appBar: AppBar(title: Text('Добавить запись сна')),
       body: Padding(
-        padding: EdgeInsets.all(16),
-        child: ListView(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
           children: [
             ListTile(
-              title: Text('Время сна'),
-              subtitle: Text(formatDateTime(sleepTime)),
-              onTap: () => pickDateTime(
-                initialDate: sleepTime,
-                onPicked: (dt) => setState(() => sleepTime = dt),
+              title: Text('Время отхода ко сну'),
+              trailing: Text(
+                sleepTime != null
+                    ? '${sleepTime!.hour}:${sleepTime!.minute}'
+                    : 'Не выбрано',
               ),
+              onTap: () => _pickDateTime(isSleepTime: true),
             ),
             ListTile(
               title: Text('Время пробуждения'),
-              subtitle: Text(formatDateTime(wakeTime)),
-              onTap: () => pickDateTime(
-                initialDate: wakeTime,
-                onPicked: (dt) => setState(() => wakeTime = dt),
+              trailing: Text(
+                wakeTime != null
+                    ? '${wakeTime!.hour}:${wakeTime!.minute}'
+                    : 'Не выбрано',
               ),
+              onTap: () => _pickDateTime(isSleepTime: false),
             ),
             SizedBox(height: 20),
-            Text('Качество сна:', style: TextStyle(fontSize: 16)),
-            buildQualityButtons(),
+            Text(
+              'Качество сна',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            SleepQualitySelector(
+              currentQuality: sleepQuality,
+              onQualityChanged: (newQuality) {
+                setState(() {
+                  sleepQuality = newQuality;
+                });
+              },
+            ),
             SizedBox(height: 20),
+            Text('Заметки о сне:'),
             TextField(
               controller: noteController,
-              decoration: InputDecoration(
-                labelText: 'Заметки',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
+              decoration: InputDecoration(hintText: 'Запишите заметки'),
+              maxLines: 3,
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 10),
+            Text('Ваши сны:'),
             TextField(
               controller: dreamController,
-              decoration: InputDecoration(
-                labelText: 'Сны',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
+              decoration: InputDecoration(hintText: 'Запишите свои сны'),
+              maxLines: 5,
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: saveEntry,
-              child: Text('Сохранить'),
-            ),
+            Spacer(),
+            ElevatedButton(onPressed: _saveEntry, child: Text('Сохранить')),
           ],
         ),
       ),

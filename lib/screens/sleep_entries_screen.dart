@@ -63,7 +63,7 @@ class _SleepEntriesScreenState extends State<SleepEntriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title:  Text('Дневник сна')),
+      appBar: AppBar(title: Text('Дневник сна')),
       body: ListView.builder(
         itemCount: entries.length,
         itemBuilder: (context, index) {
@@ -91,13 +91,11 @@ class _SleepEntriesScreenState extends State<SleepEntriesScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        child:  Icon(Icons.add),
+        child: Icon(Icons.add),
         onPressed: () async {
           final newEntry = await Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) =>  AddSleepEntryScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => AddSleepEntryScreen()),
           );
           if (newEntry != null && newEntry is SleepEntry) {
             addOrUpdateEntry(newEntry);
