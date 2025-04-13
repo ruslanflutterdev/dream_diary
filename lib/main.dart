@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'screens/sleep_entries_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
           bodyLarge: TextStyle(fontSize: 16),
         ),
       ),
-      home: const MyHomePage(),
+      home: const SleepEntriesScreen(),
     );
   }
 }

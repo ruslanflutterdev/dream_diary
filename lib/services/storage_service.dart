@@ -4,26 +4,24 @@ import 'package:path_provider/path_provider.dart';
 import '../models/sleep_entry.dart';
 
 class StorageService {
-
-  Future<File> _getLocalFile() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return File('${dir.path}/sleep_entries.json');
+  Future<File> get _localFile async {
+    final directory = await getApplicationDocumentsDirectory();
+    return File('${directory.path}/sleep_entries.json');
   }
 
   Future<List<SleepEntry>> loadEntries() async {
-    final file = await _getLocalFile();
+    final file = await _localFile;
     if (await file.exists()) {
-      final content = await file.readAsString();
-      final List decoded = jsonDecode(content);
-      return decoded.map((e) => SleepEntry.fromJson(e)).toList();
-    } else {
-      return [];
+      final jsonString = await file.readAsString();
+      final List<dynamic> jsonList = json.decode(jsonString);
+      return jsonList.map((e) => SleepEntry.fromJson(e)).toList();
     }
+    return [];
   }
 
   Future<void> saveEntries(List<SleepEntry> entries) async {
-    final file = await _getLocalFile();
-    final encoded = jsonEncode(entries.map((e) => e.toJson()).toList());
-    await file.writeAsString(encoded);
+    final file = await _localFile;
+    final jsonString = json.encode(entries.map((e) => e.toJson()).toList());
+    await file.writeAsString(jsonString);
   }
 }
