@@ -1,8 +1,8 @@
 import 'package:dream_diary/models/sleep_entry.dart';
 import 'package:dream_diary/services/storage_service.dart';
 import 'package:flutter/material.dart';
-
 import 'add_sleep_entry_screen.dart';
+import 'entry_detail_dialog.dart';
 
 class SleepEntriesScreen extends StatefulWidget {
   const SleepEntriesScreen({super.key});
@@ -32,19 +32,26 @@ class _SleepEntriesScreenState extends State<SleepEntriesScreen> {
     _storageService.saveEntries(entries);
   }
 
-  void addEntry(SleepEntry entry) {
+  void addOrUpdateEntry(SleepEntry entry, [int? index]) {
     setState(() {
-      entries.add(entry);
+      if (index == null) {
+        entries.add(entry);
+      } else {
+        entries[index] = entry;
+      }
+    });
+    _save();
+  }
+
+  void deleteEntry(int index) {
+    setState(() {
+      entries.removeAt(index);
     });
     _save();
   }
 
   String formatDateTime(DateTime dateTime) {
-    final date =
-        '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
-    final time =
-        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    return '$date $time';
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   String formatDuration(Duration d) {
@@ -56,32 +63,44 @@ class _SleepEntriesScreenState extends State<SleepEntriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Дневник сна')),
+      appBar: AppBar(title:  Text('Дневник сна')),
       body: ListView.builder(
         itemCount: entries.length,
         itemBuilder: (context, index) {
           final entry = entries[index];
           return ListTile(
             title: Text(
-              'Сон: ${formatDateTime(entry.sleepTime)} — ${formatDateTime(entry.wakeTime)}',
+              'Сон: ${formatDateTime(entry.sleepTime)} —\n${formatDateTime(entry.wakeTime)}',
             ),
             subtitle: Text(
-              'Качество: ${entry.sleepQuality}/5\n'
-              '${entry.note}\n'
-              'Длительность: ${formatDuration(entry.duration)}',
+              'Длительность: ${formatDuration(entry.duration)}\nКачество: ${entry.sleepQuality}/5',
             ),
+            onTap: () async {
+              final result = await showDialog(
+                context: context,
+                builder:
+                    (context) => EntryDetailDialog(
+                      entry: entry,
+                      onDelete: () => deleteEntry(index),
+                      onEdit: (e) => addOrUpdateEntry(e, index),
+                    ),
+              );
+              if (result == true) _save();
+            },
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        child:  Icon(Icons.add),
         onPressed: () async {
           final newEntry = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => AddSleepEntryScreen()),
+            MaterialPageRoute(
+              builder: (context) =>  AddSleepEntryScreen(),
+            ),
           );
           if (newEntry != null && newEntry is SleepEntry) {
-            addEntry(newEntry);
+            addOrUpdateEntry(newEntry);
           }
         },
       ),
