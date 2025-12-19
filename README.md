@@ -1,16 +1,41 @@
-# dream_diary
+# 🌙 Dream Diary
 
-A new Flutter project.
+**Dream Diary** — это мобильное приложение на Flutter для ведения дневника снов. Приложение помогает пользователям фиксировать свои сновидения, оценивать качество сна и анализировать статистику за определенные периоды.
 
-## Getting Started
+## ✨ Основные возможности
 
-This project is a starting point for a Flutter application.
+* **📝 Запись снов**: Добавление новых записей с детальным описанием сна.
+* **⭐ Оценка качества**: Возможность оценить качество сна по 5-балльной шкале (от "Ужасно" до "Отлично") с визуальными иконками.
+* **📅 Календарь**: Просмотр записей по датам с использованием удобного календаря (`table_calendar`).
+* **📊 Статистика**: Визуализация данных о качестве сна с помощью графиков (`fl_chart`).
+* **📂 Локальное хранение**: Все записи сохраняются локально на устройстве (JSON-файл), что гарантирует конфиденциальность.
+* **👆 Интерактивность**: Детальный просмотр записей во всплывающем окне (диалог).
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠 Технологический стек
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+* **Фреймворк**: [Flutter](https://flutter.dev/) (Dart)
+* **UI Компоненты**:
+    * `table_calendar` — для навигации по датам и отображения событий.
+    * `fl_chart` — для построения графиков статистики.
+* **Хранение данных**:
+    * `path_provider` — доступ к файловой системе.
+    * **JSON** — формат сериализации данных.
+* **Утилиты**: `intl` для форматирования дат.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📂 Структура проекта
+
+Код организован чисто и логично:
+
+```text
+lib/
+├── models/
+│   └── sleep_entry.dart         # Модель записи сна (дата, описание, оценка)
+├── screens/
+│   ├── sleep_entries_screen.dart # Главный экран со списком и календарем
+│   ├── add_sleep_entry_screen.dart # Экран создания новой записи
+│   └── entry_detail_dialog.dart  # Диалог просмотра деталей
+├── services/
+│   └── storage_service.dart      # Логика сохранения/загрузки JSON файла
+├── widgets/
+│   └── sleep_quality_selector.dart # Виджет выбора оценки (смайлики)
+└── main.dart                     # Точка входа
